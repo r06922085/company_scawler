@@ -92,6 +92,7 @@ def ExportResult(results, recordFileName):
 	sheet['F1'] = '核准設立日期'
 
 	for result in results:
+		result['Capital_Stock_Amount'] = format(int(result['Capital_Stock_Amount']/1000), ',')
 		sheet.append([  result['Business_Accounting_NO'],
 						result['Company_Name'],
 						result['Capital_Stock_Amount'],
