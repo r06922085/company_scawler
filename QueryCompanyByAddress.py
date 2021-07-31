@@ -64,6 +64,8 @@ def QueryCompanyDetail(queryAddress):
 		if isSetTotalPage == False:
 			totalPage = int(soup.find("input", id="totalPage").get('value'))
 			isSetTotalPage = True
+		else:
+			print(str(currentPage)+"/"+str(totalPage))
 		
 		contentBlocks = soup.find_all("div", {"class", "panel panel-default"})
 		for contentBlock in contentBlocks:
