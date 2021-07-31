@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import openpyxl
 import requests
 import sys
+import time
 
 request_headers = {
     'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36',
@@ -42,11 +43,6 @@ def main(argv):
 def QueryCompanyDetail(queryAddress):
 	form_data['qryCond'] = queryAddress
 
-	res = requests.post(
-            host + "/fts/query/QueryList/queryList.do", headers=request_headers, data=form_data)
-	res.encoding = 'utf8'
-	soup = BeautifulSoup(res.text, "html.parser")
-
 	totalPage = 1
 	isSetTotalPage = False
 	currentPage = 0
@@ -60,6 +56,7 @@ def QueryCompanyDetail(queryAddress):
 	            host + "/fts/query/QueryList/queryList.do", headers=request_headers, data=form_data)
 		res.encoding = 'utf8'
 		soup = BeautifulSoup(res.text, "html.parser")
+		time.sleep(2)
 
 		if isSetTotalPage == False:
 			totalPage = int(soup.find("input", id="totalPage").get('value'))
