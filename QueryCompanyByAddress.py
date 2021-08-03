@@ -59,10 +59,9 @@ def QueryCompanyDetail(queryAddress):
 		time.sleep(2)
 
 		if isSetTotalPage == False:
-			totalPage = int(soup.find("input", id="totalPage").get('value'))
+			if soup.find("input", id="totalPage") is not None:
+				totalPage = int(soup.find("input", id="totalPage").get('value'))
 			isSetTotalPage = True
-		else:
-			print(str(currentPage)+"/"+str(totalPage))
 		
 		contentBlocks = soup.find_all("div", {"class", "panel panel-default"})
 		for contentBlock in contentBlocks:
@@ -77,6 +76,7 @@ def QueryCompanyDetail(queryAddress):
 				businessAccountingNoSet.add(businessAccountingNo)
 
 		currentPage += 1
+		print(str(currentPage)+"/"+str(totalPage))
 
 	return results
 
