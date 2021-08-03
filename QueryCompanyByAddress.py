@@ -2,6 +2,7 @@
 
 from bs4 import BeautifulSoup
 import openpyxl
+import os.path
 import requests
 import sys
 import time
@@ -38,7 +39,7 @@ def main(argv):
 	recordFileName = argv[1]
 
 	results = QueryCompanyDetail(queryAddress)
-	ExportResult(results, recordFileName)
+	ExportResult(results, recordFileName+'.xlsx')
 
 def QueryCompanyDetail(queryAddress):
 	form_data['qryCond'] = queryAddress
@@ -81,7 +82,12 @@ def QueryCompanyDetail(queryAddress):
 	return results
 
 def ExportResult(results, recordFileName):
-	workbook = openpyxl.Workbook()
+
+	if os.path.isfile(recordFileName):
+		workbook = openpyxl.load_workbook(recordFileName)
+	else:
+		workbook = openpyxl.Workbook()
+
 	sheet = workbook.active
 	sheet['A1'] = '統一編號'
 	sheet['B1'] = '公司名稱'
@@ -91,9 +97,9 @@ def ExportResult(results, recordFileName):
 	sheet['F1'] = '核准設立日期'
 
 	for result in results:
-		result['Capital_Stock_Amount'] = int(result['Capital_Stock_Amount']/1000)
-		if result['Capital_Stock_Amount'] < 1000:
+		if result['Capital_Stock_Amount'] < 1000000:
 			continue
+		result['Capital_Stock_Amount'] = int(result['Capital_Stock_Amount']/1000)
 		result['Capital_Stock_Amount'] = format(result['Capital_Stock_Amount'], ',')
 		sheet.append([  result['Business_Accounting_NO'],
 						result['Company_Name'],
@@ -102,7 +108,7 @@ def ExportResult(results, recordFileName):
 						result['Company_Location'],
 						result['Company_Setup_Date']])
 
-	workbook.save(recordFileName + '.xlsx')
+	workbook.save(recordFileName)
 
 if __name__ == "__main__":
    main(sys.argv[1:])
