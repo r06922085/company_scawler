@@ -66,15 +66,22 @@ def QueryCompanyDetail(queryAddress):
 		
 		contentBlocks = soup.find_all("div", {"class", "panel panel-default"})
 		for contentBlock in contentBlocks:
-			
-			content = contentBlock.find_all("div")[1].text
+			try:
+				content = contentBlock.find_all("div")[1].text
+			except IndexError:
+				print("No record.")
+				break
 			index = content.find("統一編號")
 			businessAccountingNo = content[index+5:index+13]
 
 			if businessAccountingNo not in businessAccountingNoSet:
 				# Invoke API to obtain company detail by business account number
-				results.append(requests.get("https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6?$format=json&$filter=Business_Accounting_NO eq " + businessAccountingNo + "&$skip=0&$top=50").json()[0])
-				businessAccountingNoSet.add(businessAccountingNo)
+				try:
+					results.append(requests.get("https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6?$format=json&$filter=Business_Accounting_NO eq " + businessAccountingNo + "&$skip=0&$top=50").json()[0])
+					businessAccountingNoSet.add(businessAccountingNo)
+				except ValueError:
+					print("Current business Account Number is incorrect. Continue to parse next record.")
+					continue
 
 		currentPage += 1
 		print(str(currentPage)+"/"+str(totalPage))
