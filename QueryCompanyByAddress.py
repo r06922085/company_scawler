@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 from bs4 import BeautifulSoup
+import getopt
 import openpyxl
 import os.path
 import requests
@@ -30,63 +31,115 @@ form_data = {
 	'isAlive': 'true',
 	'busiItemMain': '', 
 	'busiItemSub': '',
+	'city': 'TPI_6300'
 }
 
 host = "https://findbiz.nat.gov.tw"
 
 def main(argv):
-	queryAddress = argv[0]
-	recordFileName = argv[1]
-
-	results = QueryCompanyDetail(queryAddress)
+	queryCondition, recordFileName, startPage = ParseParameter(argv)
+	results = QueryCompanyDetail(queryCondition, recordFileName+'.xlsx', startPage)
 	ExportResult(results, recordFileName+'.xlsx')
 
-def QueryCompanyDetail(queryAddress):
-	form_data['qryCond'] = queryAddress
+def ParseParameter(argv):
+	try:
+		opts, args = getopt.getopt(argv,"hc:o:p:",["condition=", "output=", "page="])
+	except getopt.GetoptError:
+		print("QueryCompanyDetail.py -c <QueryCondition> -o <OutputFileName> -p <StartPage>")
+		sys.exit(2)
+	for opt, arg in opts:
+		if opt == '-h':
+			print("QueryCompanyDetail.py -c <QueryCondition> -o <OutputFileName> -p <StartPage>")
+			sys.exit()
+		elif opt in ("-c", "--condition"):
+			queryCondition = arg
+		elif opt in ("-o", "--output"):
+			outputFileName = arg
+		elif opt in ("-p", "--page"):
+			startPage = arg
 
-	totalPage = 1
-	isSetTotalPage = False
-	currentPage = 0
+	return queryCondition, outputFileName, startPage
+
+def QueryCompanyDetail(queryCondition, recordFileName, startPage):
+	form_data['qryCond'] = queryCondition
+
 	results = list()
-	count = 0
-	businessAccountingNoSet = set()
+	businessAccountingNoSet = ReadExistingRecord(recordFileName)
+	
+	for i in range(10):
+		print("It is %i attempt" % (i+1))
+		totalPage = 1
+		isSetTotalPage = False
+		currentPage = int(startPage) - 1
 
-	while currentPage < totalPage:
-		form_data['curPage'] = str(currentPage)
-		res = requests.post(
-	            host + "/fts/query/QueryList/queryList.do", headers=request_headers, data=form_data)
-		res.encoding = 'utf8'
-		soup = BeautifulSoup(res.text, "html.parser")
-		time.sleep(2)
+		if currentPage >= totalPage:
+			res = requests.post(
+					host + "/fts/query/QueryList/queryList.do", 
+					headers=request_headers, 
+					data=form_data)
+			res.encoding = 'utf8'
+			soup = BeautifulSoup(res.text, "html.parser")
 
-		if isSetTotalPage == False:
-			if soup.find("input", id="totalPage") is not None:
-				totalPage = int(soup.find("input", id="totalPage").get('value'))
-			isSetTotalPage = True
-		
-		contentBlocks = soup.find_all("div", {"class", "panel panel-default"})
-		for contentBlock in contentBlocks:
-			try:
-				content = contentBlock.find_all("div")[1].text
-			except IndexError:
-				print("No record.")
-				break
-			index = content.find("統一編號")
-			businessAccountingNo = content[index+5:index+13]
+			if isSetTotalPage == False:
+				if soup.find("input", id="totalPage") is not None:
+					totalPage = int(soup.find("input", id="totalPage").get('value'))
+				isSetTotalPage = True
 
-			if businessAccountingNo not in businessAccountingNoSet:
-				# Invoke API to obtain company detail by business account number
+		while currentPage < totalPage:
+			form_data['curPage'] = str(currentPage)
+			res = requests.post(
+					host + "/fts/query/QueryList/queryList.do", 
+					headers=request_headers, 
+					data=form_data)
+			res.encoding = 'utf8'
+			soup = BeautifulSoup(res.text, "html.parser")
+
+			if isSetTotalPage == False:
+				if soup.find("input", id="totalPage") is not None:
+					totalPage = int(soup.find("input", id="totalPage").get('value'))
+				isSetTotalPage = True
+			
+			contentBlocks = soup.find_all("div", {"class", "panel panel-default"})
+
+			if len(contentBlocks) == 0:
+				print('Need your attention')
+				return results
+
+			for contentBlock in contentBlocks:
 				try:
-					results.append(requests.get("https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6?$format=json&$filter=Business_Accounting_NO eq " + businessAccountingNo + "&$skip=0&$top=50").json()[0])
-					businessAccountingNoSet.add(businessAccountingNo)
-				except ValueError:
-					print("Current business Account Number is incorrect. Continue to parse next record.")
-					continue
+					content = contentBlock.find_all("div")[1].text
+				except IndexError:
+					print("No record.")
+					break
+				index = content.find("統一編號")
+				businessAccountingNo = content[index+5:index+13]
 
-		currentPage += 1
-		print(str(currentPage)+"/"+str(totalPage))
+				if businessAccountingNo not in businessAccountingNoSet:
+					# Invoke API to obtain company detail by business account number
+					try:
+						results.append(requests.get("https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6?$format=json&$filter=Business_Accounting_NO eq " + businessAccountingNo + "&$skip=0&$top=50").json()[0])
+						businessAccountingNoSet.add(businessAccountingNo)
+					except ValueError:
+						print("Current business Account Number is incorrect. Continue to parse next record.")
+						continue
 
+			currentPage += 1
+			print(str(currentPage)+"/"+str(totalPage))
+			time.sleep(2)
+	
 	return results
+
+def ReadExistingRecord(recordFileName):
+
+	existingRecord = set()
+	if os.path.isfile(recordFileName):
+		workbook = openpyxl.load_workbook(recordFileName)
+		sheet = workbook.active
+
+		for cell in sheet['A'][1:]:
+			existingRecord.add(cell.value)
+
+	return existingRecord
 
 def ExportResult(results, recordFileName):
 
@@ -118,4 +171,4 @@ def ExportResult(results, recordFileName):
 	workbook.save(recordFileName)
 
 if __name__ == "__main__":
-   main(sys.argv[1:])
+	main(sys.argv[1:])
