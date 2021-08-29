@@ -12,6 +12,7 @@ def ReadCSV(FileName):
 	writer = FileWriter('TaipeiData.xlsx')
 	result = {}
 	count = 0
+	data_count = 0
 	row_count = 0
 	with open(FileName, newline='') as csvfile:
 		rows = csv.reader(csvfile)
@@ -19,11 +20,12 @@ def ReadCSV(FileName):
 			row_count += 1
 			if row_count >=0 and row_count <10000:
 				if isContinue(row):
+					data_count += 1
 					data = GetByNumber(row[0])
 					if isDataContinue(data):
 						count += 1
-						print(count)
 						writer.write(row, data)
+				print(str(count) + "/" + str(data_count) + "/" + str(row_count))
 	writer.close_writer()
 		 
 def isContinue(row):
@@ -37,9 +39,17 @@ def isDataContinue(data):
 	isDataContinue_ = True
 	try:
 		capital = data['Capital_Stock_Amount']
+		boss_name = data['Responsible_Name']
+		status = data['Company_Status_Desc']
 	except:
 		capital = 0
-	if capital < 10000000 or capital > 100000000:
+		boss_name = ''
+		status = ''
+	if status != "核准設立":
+		isDataContinue_ = False
+	if capital < 6000000 or capital > 50000000:
+		isDataContinue_ = False
+	if boss_name == '':
 		isDataContinue_ = False
 	return isDataContinue_
 
