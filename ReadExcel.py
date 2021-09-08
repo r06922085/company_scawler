@@ -18,7 +18,7 @@ def ReadCSV(FileName):
 		rows = csv.reader(csvfile)
 		for row in rows:
 			row_count += 1
-			if row_count >=265000 and row_count <270000:
+			if row_count >=275000 and row_count <280000:
 				if isContinue(row):
 					data_count += 1
 					data = GetByNumber(row[0])
