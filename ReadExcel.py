@@ -18,7 +18,7 @@ def ReadCSV(FileName):
 		rows = csv.reader(csvfile)
 		for row in rows:
 			row_count += 1
-			if row_count >=285000 and row_count <290000:
+			if row_count >=245000 and row_count <250000:
 				if isContinue(row):
 					data_count += 1
 					data = GetByNumber(row[0])
@@ -30,7 +30,7 @@ def ReadCSV(FileName):
 		 
 def isContinue(row):
 	isContinue_ = True
-	if "臺北市大安區" not in row[5] and "臺北市中山區" not in row[5] and "臺北市內湖區" not in row[5] and "臺北市萬華區" not in row[5]:
+	if "臺北市大安區" not in row[5] and "臺北市中山區" not in row[5] and "臺北市中正區" not in row[5] and "臺北市萬華區" not in row[5]:
 		isContinue_ = False
 
 	return isContinue_
