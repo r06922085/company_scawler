@@ -18,7 +18,7 @@ def ReadCSV(FileName):
 		rows = csv.reader(csvfile)
 		for row in rows:
 			row_count += 1
-			if row_count >=245000 and row_count <250000:
+			if row_count >=245000 and row_count <245500:
 				if isContinue(row):
 					data_count += 1
 					data = GetByNumber(row[0])
@@ -39,8 +39,11 @@ def isDataContinue(data):
 	isDataContinue_ = True
 	try:
 		capital = data['Capital_Stock_Amount']
+		capital_real = data['Paid_In_Capital_Amount']
 		boss_name = data['Responsible_Name']
 		status = data['Company_Status_Desc']
+		if capital_real != 0 and capital_real is not None:
+			capital = capital_real
 	except:
 		capital = 0
 		boss_name = ''
@@ -87,7 +90,9 @@ class FileWriter():
 		result['Number'] = row_data[0]
 		result['Company_Name'] = row_data[3]
 		result['Boss_Name'] = website_data['Responsible_Name']
-		result['capital'] = website_data['Capital_Stock_Amount']
+		result['capital'] = website_data['Paid_In_Capital_Amount']
+		if result['capital'] == 0 or result['capital'] is None:
+			result['capital'] = website_data['Capital_Stock_Amount']
 		result['Phone'] = row_data[8]
 		result['Address'] = row_data[5]
 		result['Start'] = website_data['Company_Setup_Date']
