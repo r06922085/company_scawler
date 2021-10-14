@@ -15,53 +15,24 @@ def ReadEXCEL(FileName):
 	rows = openpyxl.load_workbook(FileName)
 	rows = rows['工作表1']
 	for row in rows:
-		nick_name = row[0].value
-		number = row[1].value
+		number = row[0].value
 		if number is None:
 			continue
 		data = GetByNumber(str(number))
-		writer.write(row[2].value, data)
+		comment = ""
+		writer.write(comment, data)
 	writer.close_writer()
-		 
-def isContinue(row):
-	isContinue_ = True
-
-	if "臺北市" not in row[5] or "珠寶"  not in row[3]:
-		isContinue_ = False
-	#if "臺北市大安區" not in row[5] and "臺北市中山區" not in row[5] and "臺北市中正區" not in row[5] and "臺北市萬華區" not in row[5]:
-	#	isContinue_ = False
-	#if (not row[8].startswith('09')) and (not row[8].startswith(' 9')) and (not row[8].startswith('886')):
-		#isContinue_ = False
-	return isContinue_
-
-def isDataContinue(data):
-	isDataContinue_ = True
-	try:
-		capital = data['Capital_Stock_Amount']
-		capital_real = data['Paid_In_Capital_Amount']
-		boss_name = data['Responsible_Name']
-		status = data['Company_Status_Desc']
-		if capital_real != 0 and capital_real is not None:
-			capital = capital_real
-	except:
-		capital = 0
-		boss_name = ''
-		status = ''
-	if status != "核准設立":
-		isDataContinue_ = False
-	if capital  < 6000000:
-		isDataContinue_ = False
-	if boss_name == '':
-		isDataContinue_ = False
-	return isDataContinue_
-
 
 def GetByNumber(businessAccountingNo):
 	try:
 	    result = requests.get("https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6?$format=json&$filter=Business_Accounting_NO eq " + businessAccountingNo + "&$skip=0&$top=50").json()[0]
 	except:
-		print("No such company number")
-		result = None
+		try:
+			businessAccountingNo = "0" + businessAccountingNo
+			result = requests.get("https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6?$format=json&$filter=Business_Accounting_NO eq " + businessAccountingNo + "&$skip=0&$top=50").json()[0]
+		except:
+			print("No such company number")
+			result = None
 	return result
 
 class FileWriter():
@@ -99,7 +70,10 @@ class FileWriter():
 		return result
 
 	def write(self, describe, website_data):
-		result = self.get_result(website_data)
+		try:
+			result = self.get_result(website_data)
+		except:
+			return
 		print(result['capital'])
 		result['capital'] = int(result['capital']/1000)
 		result['capital'] = format(result['capital'], ',')

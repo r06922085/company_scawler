@@ -18,7 +18,7 @@ def ReadCSV(FileName):
 		rows = csv.reader(csvfile)
 		for row in rows:
 			row_count += 1
-			if row_count >=245000 and row_count <245500:
+			if row_count >=235000 and row_count <240000:
 				if isContinue(row):
 					data_count += 1
 					data = GetByNumber(row[0])
@@ -30,9 +30,13 @@ def ReadCSV(FileName):
 		 
 def isContinue(row):
 	isContinue_ = True
+
+	#if "臺北市" not in row[5] or "珠寶"  not in row[3]:
+	#	isContinue_ = False
 	if "臺北市大安區" not in row[5] and "臺北市中山區" not in row[5] and "臺北市中正區" not in row[5] and "臺北市萬華區" not in row[5]:
 		isContinue_ = False
-
+	#if (not row[8].startswith('09')) and (not row[8].startswith(' 9')) and (not row[8].startswith('886')):
+		#isContinue_ = False
 	return isContinue_
 
 def isDataContinue(data):
@@ -50,7 +54,7 @@ def isDataContinue(data):
 		status = ''
 	if status != "核准設立":
 		isDataContinue_ = False
-	if capital < 6000000 or capital > 50000000:
+	if capital  < 7000000 or capital > 500000000:
 		isDataContinue_ = False
 	if boss_name == '':
 		isDataContinue_ = False
